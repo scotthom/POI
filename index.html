@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historical Explorer</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #1a1614;
+    --parchment: #f5f0e8;
+    --aged: #e8dfc8;
+    --sepia: #8b6914;
+    --rust: #9b3a2a;
+    --sage: #4a6741;
+    --smoke: rgba(26,22,20,0.06);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--ink);
+    color: var(--parchment);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    padding: 14px 24px 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    border-bottom: 1px solid rgba(245,240,232,0.08);
+    flex-shrink: 0;
+  }
+
+  .title-group h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--aged);
+  }
+
+  .title-group p {
+    font-size: 11px;
+    color: rgba(245,240,232,0.4);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .locate-btn {
+    margin-left: auto;
+    background: none;
+    border: 1px solid rgba(245,240,232,0.2);
+    color: var(--parchment);
+    padding: 7px 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 2px;
+  }
+
+  .locate-btn:hover { background: rgba(245,240,232,0.07); border-color: rgba(245,240,232,0.4); }
+  .locate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  #map {
+    flex: 1;
+    background: #111;
+  }
+
+  /* Dark Leaflet tiles override */
+  .leaflet-tile { filter: brightness(0.55) saturate(0.6); }
+
+  .sidebar {
+    width: 340px;
+    background: #111009;
+    border-left: 1px solid rgba(245,240,232,0.07);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .sidebar-status {
+    padding: 20px 22px 16px;
+    border-bottom: 1px solid rgba(245,240,232,0.07);
+    font-size: 12px;
+    color: rgba(245,240,232,0.45);
+    letter-spacing: 0.04em;
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+  }
+
+  .sites-list {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139,105,20,0.3) transparent;
+  }
+
+  .site-card {
+    padding: 16px 22px;
+    border-bottom: 1px solid rgba(245,240,232,0.05);
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+
+  .site-card:hover { background: rgba(245,240,232,0.03); }
+  .site-card.active { background: rgba(139,105,20,0.1); border-left: 2px solid var(--sepia); }
+
+  .site-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    color: var(--sepia);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .site-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--aged);
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+
+  .site-dist {
+    font-size: 11px;
+    color: rgba(245,240,232,0.3);
+    letter-spacing: 0.04em;
+  }
+
+  .narration-panel {
+    border-top: 1px solid rgba(245,240,232,0.07);
+    background: #0d0b08;
+    padding: 18px 22px;
+    min-height: 160px;
+    max-height: 260px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .narration-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-style: italic;
+    color: rgba(245,240,232,0.35);
+    margin-bottom: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .narration-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: rgba(245,240,232,0.82);
+  }
+
+  .narration-text em {
+    font-style: italic;
+    color: var(--aged);
+  }
+
+  .play-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    align-items: center;
+  }
+
+  .play-btn {
+    background: var(--sepia);
+    border: none;
+    color: var(--ink);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .play-btn:hover { background: #a87a1a; }
+  .play-btn:disabled { background: rgba(139,105,20,0.3); cursor: not-allowed; }
+
+  .voice-label {
+    font-size: 11px;
+    color: rgba(245,240,232,0.3);
+    letter-spacing: 0.06em;
+  }
+
+  .loading-dots::after {
+    content: '';
+    animation: dots 1.4s infinite;
+  }
+
+  @keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+  }
+
+  .pulse {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: var(--sepia);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .empty-state {
+    padding: 32px 22px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-style: italic;
+    color: rgba(245,240,232,0.2);
+    line-height: 1.6;
+  }
+
+  /* Custom leaflet marker */
+  .hist-marker {
+    background: var(--sepia);
+    border: 2px solid var(--aged);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    width: 20px;
+    height: 20px;
+  }
+
+  .you-marker {
+    background: var(--rust);
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    box-shadow: 0 0 0 4px rgba(155,58,42,0.25);
+  }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 1px solid rgba(245,240,232,0.2);
+    border-top-color: var(--sepia);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .speaking-indicator {
+    display: inline-flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 14px;
+    margin-left: 8px;
+  }
+
+  .speaking-indicator span {
+    display: inline-block;
+    width: 3px;
+    background: var(--sepia);
+    border-radius: 1px;
+    animation: wave 1.2s ease-in-out infinite;
+  }
+
+  .speaking-indicator span:nth-child(2) { animation-delay: 0.15s; }
+  .speaking-indicator span:nth-child(3) { animation-delay: 0.3s; }
+  .speaking-indicator span:nth-child(4) { animation-delay: 0.45s; }
+
+  @keyframes wave {
+    0%, 100% { height: 4px; }
+    50% { height: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-group">
+    <h1>Historical Explorer</h1>
+    <p>Nearby places with stories</p>
+  </div>
+  <button class="locate-btn" id="locateBtn" onclick="locateMe()">Find My Location</button>
+</header>
+
+<div class="main">
+  <div id="map"></div>
+  <div class="sidebar">
+    <div class="sidebar-status" id="status">
+      Press "Find My Location" to discover nearby history.
+    </div>
+
+    <div class="sites-list" id="sitesList">
+      <div class="empty-state">
+        Your historical sites will appear here once located.
+      </div>
+    </div>
+
+    <div class="narration-panel" id="narrationPanel">
+      <div class="narration-title">Narration</div>
+      <div class="narration-text" id="narrationText" style="color:rgba(245,240,232,0.2);font-style:italic;">
+        Select a site to hear its story read aloud.
+      </div>
+      <div class="play-controls" id="playControls" style="display:none">
+        <button class="play-btn" id="playBtn" onclick="toggleSpeech()" title="Play / Pause">▶</button>
+        <span class="voice-label" id="voiceLabel">Ready</span>
+        <div class="speaking-indicator" id="speakingIndicator" style="display:none">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let map, userMarker, siteMarkers = [];
+let currentSites = [], currentNarration = "", isSpeaking = false;
+let userLat, userLng;
+
+// Init map
+map = L.map('map', { zoomControl: true }).setView([20, 0], 2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap',
+  maxZoom: 18
+}).addTo(map);
+
+function setStatus(html) {
+  document.getElementById('status').innerHTML = html;
+}
+
+async function locateMe() {
+  const btn = document.getElementById('locateBtn');
+  btn.disabled = true;
+  btn.textContent = 'Locating…';
+  setStatus('<span class="spinner"></span>Requesting your location…');
+
+  if (!navigator.geolocation) {
+    setStatus('Geolocation not supported by your browser.');
+    btn.disabled = false;
+    btn.textContent = 'Find My Location';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => onLocation(pos.coords.latitude, pos.coords.longitude),
+    err => {
+      setStatus(`Location denied: ${err.message}. Try enabling location for this site.`);
+      btn.disabled = false;
+      btn.textContent = 'Try Again';
+    },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
+}
+
+async function onLocation(lat, lng) {
+  userLat = lat; userLng = lng;
+
+  // Place user marker
+  if (userMarker) map.removeLayer(userMarker);
+  const youIcon = L.divIcon({ className: '', html: '<div class="you-marker"></div>', iconSize: [14,14], iconAnchor: [7,7] });
+  userMarker = L.marker([lat, lng], { icon: youIcon }).addTo(map).bindPopup('<b>You are here</b>');
+  map.setView([lat, lng], 14);
+
+  setStatus('<span class="spinner"></span>Searching Wikipedia for nearby history…');
+
+  try {
+    const sites = await fetchNearbySites(lat, lng);
+    if (sites.length === 0) {
+      setStatus('No historical sites found within 5 km. Try in a different area.');
+      document.getElementById('locateBtn').disabled = false;
+      document.getElementById('locateBtn').textContent = 'Try Again';
+      return;
+    }
+    currentSites = sites.slice(0, 3);
+    renderSites();
+    setStatus(`<span class="pulse"></span>Found ${currentSites.length} historical sites nearby`);
+    document.getElementById('locateBtn').disabled = false;
+    document.getElementById('locateBtn').textContent = 'Refresh';
+  } catch(e) {
+    setStatus(`Error: ${e.message}`);
+    document.getElementById('locateBtn').disabled = false;
+    document.getElementById('locateBtn').textContent = 'Try Again';
+  }
+}
+
+async function fetchNearbySites(lat, lng) {
+  // Wikipedia geosearch
+  const geoUrl = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=5000&gslimit=20&format=json&origin=*`;
+  const geoRes = await fetch(geoUrl);
+  const geoData = await geoRes.json();
+  const pages = geoData.query?.geosearch || [];
+
+  if (pages.length === 0) return [];
+
+  // Filter and pick 3 interesting ones using extract snippets
+  const topIds = pages.slice(0, 10).map(p => p.pageid).join('|');
+  const extractUrl = `https://en.wikipedia.org/w/api.php?action=query&pageids=${topIds}&prop=extracts|coordinates|pageimages&exintro=1&exchars=600&format=json&origin=*&piprop=thumbnail&pithumbsize=200`;
+  const extRes = await fetch(extractUrl);
+  const extData = await extRes.json();
+
+  const enriched = pages.slice(0, 10).map(p => {
+    const page = extData.query?.pages?.[p.pageid];
+    const extract = page?.extract || '';
+    const coords = page?.coordinates?.[0] || { lat: p.lat, lon: p.lon };
+    const dist = haversine(lat, lng, p.lat, p.lon);
+    return {
+      id: p.pageid,
+      title: p.title,
+      extract: stripHtml(extract),
+      lat: coords.lat,
+      lon: coords.lon,
+      dist
+    };
+  }).filter(p => p.extract.length > 80);
+
+  // Score by: has historical keywords + distance
+  const historicalTerms = /historic|century|ancient|founded|built|war|battle|temple|church|castle|palace|monument|landmark|museum|heritage|ruins|coloni|empire|revolut|medieval|roman|greek|dynasty|archit/i;
+  enriched.sort((a, b) => {
+    const aScore = (historicalTerms.test(a.title + a.extract) ? 1000 : 0) - a.dist;
+    const bScore = (historicalTerms.test(b.title + b.extract) ? 1000 : 0) - b.dist;
+    return bScore - aScore;
+  });
+
+  return enriched.slice(0, 3);
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+  const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function stripHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+}
+
+function renderSites() {
+  // Clear old markers
+  siteMarkers.forEach(m => map.removeLayer(m));
+  siteMarkers = [];
+
+  const list = document.getElementById('sitesList');
+  list.innerHTML = '';
+
+  const colors = ['#8b6914', '#9b3a2a', '#4a6741'];
+  const nums = ['I', 'II', 'III'];
+
+  currentSites.forEach((site, i) => {
+    // Map marker
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:${colors[i]};border:2px solid #f5f0e8;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:20px;height:20px;cursor:pointer"></div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 20],
+      popupAnchor: [0, -22]
+    });
+
+    const marker = L.marker([site.lat, site.lon], { icon })
+      .addTo(map)
+      .bindPopup(`<strong>${site.title}</strong><br><small>${Math.round(site.dist)}m away</small>`);
+
+    marker.on('click', () => selectSite(i));
+    siteMarkers.push(marker);
+
+    // Card
+    const card = document.createElement('div');
+    card.className = 'site-card';
+    card.id = `card-${i}`;
+    card.innerHTML = `
+      <div class="site-num">${nums[i]}</div>
+      <div class="site-name">${site.title}</div>
+      <div class="site-dist">${Math.round(site.dist)} m away</div>
+    `;
+    card.onclick = () => selectSite(i);
+    list.appendChild(card);
+  });
+
+  // Fit map to show all
+  const bounds = L.latLngBounds(
+    currentSites.map(s => [s.lat, s.lon]).concat([[userLat, userLng]])
+  );
+  map.fitBounds(bounds, { padding: [40, 40] });
+}
+
+let activeIndex = -1;
+
+function selectSite(i) {
+  // UI highlight
+  document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
+  document.getElementById(`card-${i}`)?.classList.add('active');
+
+  // Stop any ongoing speech
+  stopSpeech();
+  activeIndex = i;
+
+  const site = currentSites[i];
+  map.setView([site.lat, site.lon], 15);
+  siteMarkers[i]?.openPopup();
+
+  document.getElementById('playControls').style.display = 'none';
+  document.getElementById('narrationText').style.cssText = '';
+
+  const extract = site.extract.slice(0, 800);
+  currentNarration = extract;
+  document.getElementById('narrationText').style.cssText = '';
+  document.getElementById('narrationText').innerHTML = extract;
+  document.getElementById('playControls').style.display = 'flex';
+  document.getElementById('voiceLabel').textContent = 'Tap ▶ to listen';
+}
+
+
+
+// TTS
+let utterance = null;
+
+function toggleSpeech() {
+  if (isSpeaking) {
+    stopSpeech();
+  } else {
+    startSpeech();
+  }
+}
+
+function startSpeech() {
+  if (!currentNarration || !window.speechSynthesis) return;
+
+  window.speechSynthesis.cancel();
+  utterance = new SpeechSynthesisUtterance(currentNarration);
+
+  // Pick a calm, clear voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v =>
+    /samantha|karen|daniel|moira|fiona|victoria|serena|google uk|google aus/i.test(v.name)
+  ) || voices.find(v => v.lang.startsWith('en') && !v.localService === false)
+    || voices.find(v => v.lang.startsWith('en'))
+    || voices[0];
+
+  if (preferred) utterance.voice = preferred;
+  utterance.rate = 0.88;
+  utterance.pitch = 0.95;
+  utterance.volume = 1;
+
+  utterance.onstart = () => {
+    isSpeaking = true;
+    document.getElementById('playBtn').textContent = '⏸';
+    document.getElementById('voiceLabel').textContent = 'Speaking…';
+    document.getElementById('speakingIndicator').style.display = 'inline-flex';
+  };
+
+  utterance.onend = utterance.onerror = () => {
+    isSpeaking = false;
+    document.getElementById('playBtn').textContent = '▶';
+    document.getElementById('voiceLabel').textContent = 'Play again';
+    document.getElementById('speakingIndicator').style.display = 'none';
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopSpeech() {
+  window.speechSynthesis?.cancel();
+  isSpeaking = false;
+  document.getElementById('playBtn').textContent = '▶';
+  document.getElementById('voiceLabel').textContent = 'Ready';
+  document.getElementById('speakingIndicator').style.display = 'none';
+}
+
+// Voices load asynchronously in some browsers
+window.speechSynthesis?.addEventListener?.('voiceschanged', () => {});
+</script>
+</body>
+</html>
