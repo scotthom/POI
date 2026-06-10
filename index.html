@@ -228,7 +228,6 @@
     height: var(--sheet-full);
     transform: translateY(calc(var(--sheet-full) - var(--sheet-peek)));
     will-change: transform;
-    touch-action: none;
   }
 
   #bottom-sheet.sheet-mid {
@@ -239,8 +238,12 @@
     transform: translateY(0);
   }
 
-  /* drag handle */
-  .sheet-handle {
+  .sheet-handle,
+  .sheet-status {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
     width: 36px;
     height: 4px;
     background: rgba(245,240,232,0.2);
@@ -548,23 +551,30 @@ L.control.zoom({ position: 'topright' }).addTo(map);
 
 // ── BOTTOM SHEET DRAG ─────────────────────────────────────────
 const sheet = document.getElementById('bottom-sheet');
-// Drag target: handle + status row (larger touch area)
 const dragTargets = [
   document.getElementById('sheetHandle'),
   document.getElementById('mobileStatus')
 ];
 let dragStartY = 0, dragStartTranslate = 0, isDragging = false;
 let lastY = 0, lastTime = 0, velocityY = 0;
+let currentTranslate = 0; // manually tracked — never read DOMMatrix during transition
 
-function getTranslate() {
-  const t = new DOMMatrix(getComputedStyle(sheet).transform);
-  return t.m42;
+function setTranslate(y) {
+  currentTranslate = y;
+  sheet.style.transform = `translateY(${y}px)`;
 }
 
 function snapSheet(direction) {
   sheet.classList.remove('sheet-mid', 'sheet-open');
   if (direction === 'open') sheet.classList.add('sheet-open');
   else if (direction === 'mid') sheet.classList.add('sheet-mid');
+  // Sync currentTranslate to the CSS snap destination
+  const sheetH = sheet.offsetHeight;
+  const peekH = 120;
+  const midH = window.innerHeight * 0.52;
+  if (direction === 'open')     currentTranslate = 0;
+  else if (direction === 'mid') currentTranslate = sheetH - midH;
+  else                          currentTranslate = sheetH - peekH;
   updateLocateBtnPosition(direction);
 }
 
@@ -588,7 +598,7 @@ function updateLocateBtnPosition(sheetState) {
 function onDragStart(e) {
   isDragging = true;
   dragStartY = e.touches[0].clientY;
-  dragStartTranslate = getTranslate();
+  dragStartTranslate = currentTranslate;
   lastY = dragStartY;
   lastTime = Date.now();
   velocityY = 0;
@@ -600,12 +610,12 @@ function onDragMove(e) {
   const y = e.touches[0].clientY;
   const now = Date.now();
   const dt = now - lastTime;
-  if (dt > 0) velocityY = (y - lastY) / dt; // px/ms, positive = dragging down
+  if (dt > 0) velocityY = (y - lastY) / dt;
   lastY = y;
   lastTime = now;
   const dy = y - dragStartY;
   const newT = Math.max(0, dragStartTranslate + dy);
-  sheet.style.transform = `translateY(${newT}px)`;
+  setTranslate(newT);
 }
 
 function onDragEnd() {
@@ -613,28 +623,23 @@ function onDragEnd() {
   isDragging = false;
   sheet.style.transition = '';
 
-  const finalT = getTranslate();
+  const finalT = currentTranslate;
   const sheetH = sheet.offsetHeight;
-  const peekH = 120; // matches --sheet-peek
+  const peekH = 120;
   const midH = window.innerHeight * 0.52;
 
-  // Snap points as translateY values
   const snapOpen = 0;
   const snapMid  = sheetH - midH;
   const snapDown = sheetH - peekH;
 
-  // Velocity threshold: flick up/down overrides position
-  const FLICK = 0.5; // px/ms
+  const FLICK = 0.5;
   if (velocityY < -FLICK) {
-    // Flicking up — promote one level
     if (finalT > snapMid) snapSheet('mid');
     else snapSheet('open');
   } else if (velocityY > FLICK) {
-    // Flicking down — demote one level
     if (finalT < snapMid) snapSheet('mid');
     else snapSheet('down');
   } else {
-    // No flick — snap to nearest point
     const distOpen = Math.abs(finalT - snapOpen);
     const distMid  = Math.abs(finalT - snapMid);
     const distDown = Math.abs(finalT - snapDown);
@@ -990,7 +995,6 @@ window.addEventListener('resize', () => {
 // On mobile, start sheet in collapsed/peek position
 if (isMobile()) {
   snapSheet('down');
-  // set initial locate button bottom position
   document.getElementById('locateBtn').style.bottom = '148px';
 }
 </script>
