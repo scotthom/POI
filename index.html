@@ -290,7 +290,7 @@
     max-height: 240px;
   }
 
-  /* ─── SHARED CARD / NARRATION STYLES ────────────────── */
+  /* ─── SHARED CARD / DETAIL STYLES ──────────────────── */
   .site-card {
     padding: 15px 22px;
     border-bottom: 1px solid rgba(245,240,232,0.05);
@@ -300,12 +300,6 @@
 
   .site-card:active,
   .site-card:hover { background: rgba(245,240,232,0.04); }
-
-  .site-card.active {
-    background: rgba(139,105,20,0.1);
-    border-left: 2px solid var(--sepia);
-    padding-left: 20px;
-  }
 
   .site-num {
     font-family: 'Cormorant Garamond', serif;
@@ -321,64 +315,94 @@
     font-weight: 400;
     color: var(--aged);
     line-height: 1.3;
-    margin-bottom: 3px;
   }
 
-  .site-dist {
-    font-size: 11px;
-    color: var(--text-dimmer);
-    letter-spacing: 0.04em;
+  /* ─── DETAIL VIEW ────────────────────────────────────── */
+  .detail-view {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
   }
 
-  .narration-label {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 12px;
-    font-style: italic;
-    color: rgba(245,240,232,0.3);
-    letter-spacing: 0.04em;
-    margin-bottom: 8px;
-  }
+  .detail-view.visible { display: flex; }
 
-  .narration-text {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 15px;
-    font-weight: 300;
-    line-height: 1.7;
-    color: rgba(245,240,232,0.82);
-  }
-
-  .play-controls {
+  .detail-back {
     display: flex;
-    gap: 10px;
-    margin-top: 14px;
     align-items: center;
+    gap: 6px;
+    padding: 12px 18px 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    flex-shrink: 0;
+    background: none;
+    border-left: none; border-right: none; border-top: none;
+    color: var(--sepia);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: opacity 0.15s;
+    width: 100%;
+    text-align: left;
   }
 
-  .play-btn {
+  .detail-back:hover { opacity: 0.7; }
+
+  .detail-back svg {
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+  }
+
+  .detail-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .detail-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--aged);
+    line-height: 1.25;
+  }
+
+  .detail-play-btn {
     background: var(--sepia);
     border: none;
     color: var(--ink);
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
+    width: 70%;
+    height: 42px;
+    border-radius: 21px;
     cursor: pointer;
-    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
+    align-self: center;
     transition: background 0.15s;
+    box-shadow: 0 2px 10px rgba(139,105,20,0.4);
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(139,105,20,0.4);
   }
 
-  .play-btn:hover,
-  .play-btn:active { background: #a87a1a; }
-  .play-btn:disabled { background: rgba(139,105,20,0.3); cursor: not-allowed; box-shadow: none; }
+  .detail-play-btn:hover,
+  .detail-play-btn:active { background: #a87a1a; }
 
-  .voice-label {
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: 0.06em;
+  .detail-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.75;
+    color: rgba(245,240,232,0.82);
   }
 
   .empty-state {
@@ -502,21 +526,21 @@
     Press the locate button to discover nearby history.
   </div>
 
+  <!-- List view -->
   <div class="sheet-sites" id="mobileSitesList">
     <div class="empty-state">Your historical sites will appear here once located.</div>
   </div>
 
-  <div id="mobileNarration" style="display:none">
-    <div class="sheet-narration">
-      <div class="narration-label">Narration</div>
-      <div class="narration-text" id="mobileNarrationText"></div>
-      <div class="play-controls" id="mobilePlayControls">
-        <button class="play-btn" id="mobilePlayBtn" onclick="toggleSpeech()" title="Play / Pause">▶</button>
-        <span class="voice-label" id="mobileVoiceLabel">Tap to listen</span>
-        <div class="speaking-indicator" id="mobileSpeakingIndicator" style="display:none">
-          <span></span><span></span><span></span><span></span>
-        </div>
-      </div>
+  <!-- Detail view -->
+  <div class="detail-view" id="mobileDetail">
+    <button class="detail-back" onclick="showList('mobile')">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      All sites
+    </button>
+    <div class="detail-body">
+      <div class="detail-title" id="mobileDetailTitle"></div>
+      <button class="detail-play-btn" id="mobilePlayBtn" onclick="toggleSpeech()">&#9654; Play</button>
+      <div class="detail-text" id="mobileDetailText"></div>
     </div>
   </div>
 </div>
@@ -527,19 +551,21 @@
     Press "Find My Location" to discover nearby history.
   </div>
 
+  <!-- List view -->
   <div class="sites-list" id="desktopSitesList">
     <div class="empty-state">Your historical sites will appear here once located.</div>
   </div>
 
-  <div class="narration-panel" id="desktopNarrationPanel" style="display:none">
-    <div class="narration-label">Narration</div>
-    <div class="narration-text" id="desktopNarrationText"></div>
-    <div class="play-controls" id="desktopPlayControls" style="margin-top:12px">
-      <button class="play-btn" id="desktopPlayBtn" onclick="toggleSpeech()" title="Play / Pause">▶</button>
-      <span class="voice-label" id="desktopVoiceLabel">Tap to listen</span>
-      <div class="speaking-indicator" id="desktopSpeakingIndicator" style="display:none">
-        <span></span><span></span><span></span><span></span>
-      </div>
+  <!-- Detail view -->
+  <div class="detail-view" id="desktopDetail">
+    <button class="detail-back" onclick="showList('desktop')">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      All sites
+    </button>
+    <div class="detail-body">
+      <div class="detail-title" id="desktopDetailTitle"></div>
+      <button class="detail-play-btn" id="desktopPlayBtn" onclick="toggleSpeech()">&#9654; Play</button>
+      <div class="detail-text" id="desktopDetailText"></div>
     </div>
   </div>
 </div>
@@ -802,11 +828,10 @@ function renderSites() {
     marker.on('click', () => selectSite(i));
     siteMarkers.push(marker);
 
-    // Build card — same markup for both panels
+    // Card — title + distance only
     const cardHtml = `
       <div class="site-num">${nums[i]}</div>
       <div class="site-name">${site.title}</div>
-      <div class="site-dist">${Math.round(site.dist)} m away</div>
     `;
 
     const mCard = document.createElement('div');
@@ -830,38 +855,45 @@ function renderSites() {
   map.fitBounds(bounds, { padding: [60, 60] });
 }
 
-// ── SELECT SITE ───────────────────────────────────────────────
+// ── SELECT SITE — switch to detail view ───────────────────────
 function selectSite(i) {
-  document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
-  document.getElementById(`mcard-${i}`)?.classList.add('active');
-  document.getElementById(`dcard-${i}`)?.classList.add('active');
-
   stopSpeech();
   activeIndex = i;
 
   const site = currentSites[i];
+  currentNarration = site.extract.slice(0, 800);
+
   map.setView([site.lat, site.lon], 15);
   siteMarkers[i]?.openPopup();
 
-  const extract = site.extract.slice(0, 800);
-  currentNarration = extract;
+  // Populate both detail views
+  ['mobile', 'desktop'].forEach(ctx => {
+    document.getElementById(`${ctx}DetailTitle`).textContent = site.title;
+    document.getElementById(`${ctx}DetailText`).textContent = currentNarration;
+    document.getElementById(`${ctx}PlayBtn`).textContent = '\u25B6 Play';
+  });
 
-  // Mobile narration
-  document.getElementById('mobileNarrationText').textContent = extract;
-  document.getElementById('mobileVoiceLabel').textContent = 'Tap to listen';
-  document.getElementById('mobileNarration').style.display = '';
-  document.getElementById('mobileSpeakingIndicator').style.display = 'none';
-  document.getElementById('mobilePlayBtn').textContent = '▶';
+  // Show detail, hide list
+  document.getElementById('mobileSitesList').style.display = 'none';
+  document.getElementById('mobileDetail').classList.add('visible');
+  document.getElementById('desktopSitesList').style.display = 'none';
+  document.getElementById('desktopDetail').classList.add('visible');
 
-  // Desktop narration
-  document.getElementById('desktopNarrationText').textContent = extract;
-  document.getElementById('desktopVoiceLabel').textContent = 'Tap to listen';
-  document.getElementById('desktopNarrationPanel').style.display = '';
-  document.getElementById('desktopSpeakingIndicator').style.display = 'none';
-  document.getElementById('desktopPlayBtn').textContent = '▶';
-
-  // Expand sheet on mobile so narration is visible
   if (isMobile()) snapSheet('open');
+}
+
+// ── BACK TO LIST ─────────────────────────────────────────────
+function showList(ctx) {
+  stopSpeech();
+  if (ctx === 'mobile' || ctx === 'both') {
+    document.getElementById('mobileSitesList').style.display = '';
+    document.getElementById('mobileDetail').classList.remove('visible');
+    snapSheet('mid');
+  }
+  if (ctx === 'desktop' || ctx === 'both') {
+    document.getElementById('desktopSitesList').style.display = '';
+    document.getElementById('desktopDetail').classList.remove('visible');
+  }
 }
 
 // ── TTS (chunked for iOS) ─────────────────────────────────────
@@ -944,22 +976,14 @@ function stopSpeech() {
 }
 
 function setSpeakingUI(speaking) {
-  const playIcon = speaking ? '⏸' : '▶';
   ['mobilePlayBtn', 'desktopPlayBtn'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.textContent = playIcon;
-  });
-  ['mobileSpeakingIndicator', 'desktopSpeakingIndicator'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = speaking ? 'inline-flex' : 'none';
+    if (el) el.textContent = speaking ? '\u23F8 Stop' : '\u25B6 Play';
   });
 }
 
 function setVoiceLabel(text) {
-  ['mobileVoiceLabel', 'desktopVoiceLabel'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
-  });
+  // no-op — label now lives inside the button text
 }
 
 // Voices may load async
