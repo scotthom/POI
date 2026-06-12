@@ -245,6 +245,8 @@
     user-select: none;
     -webkit-user-select: none;
   }
+
+  .sheet-handle {
     width: 36px;
     height: 4px;
     background: rgba(245,240,232,0.2);
@@ -917,8 +919,9 @@ dragTargets.forEach(el => {
 
 // ── STATUS HELPERS ───────────────────────────────────────────
 function setStatus(html) {
-  document.getElementById('mobileStatus').innerHTML = html;
   document.getElementById('desktopStatus').innerHTML = html;
+  // Mobile status bar hidden — drag handle is the only affordance needed
+  document.getElementById('mobileStatus').style.display = 'none';
 }
 
 // ── LOCATE BUTTON STATE ──────────────────────────────────────
