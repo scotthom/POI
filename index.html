@@ -246,11 +246,28 @@
 
   .sheet-handle,
   .sheet-status {
-    touch-action: none;
     user-select: none;
     -webkit-user-select: none;
   }
 
+  /* ─── DRAG ZONE ──────────────────────────────────────── */
+  #drag-zone {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    z-index: 10;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 10px;
+    pointer-events: auto;
+  }
+
+  /* drag handle pill — purely decorative, lives inside drag-zone */
   .sheet-handle {
     width: 36px;
     height: 4px;
@@ -668,10 +685,14 @@
 
 <!-- ── MOBILE BOTTOM SHEET ───────────────────────────────── -->
 <div id="bottom-sheet" aria-label="Nearby sites panel">
-  <div class="sheet-handle" id="sheetHandle"></div>
 
-  <div class="sheet-status" id="mobileStatus">
-    Press the locate button to discover nearby history.
+  <!-- Full-width drag zone — 60px, intercepts drag, passes taps through -->
+  <div id="drag-zone">
+    <div class="sheet-handle"></div>
+  </div>
+
+  <div class="sheet-status" id="mobileStatus" style="display:none">
+    POI
   </div>
 
   <!-- List view -->
@@ -807,13 +828,11 @@ L.control.zoom({ position: 'topright' }).addTo(map);
 
 // ── BOTTOM SHEET DRAG ─────────────────────────────────────────
 const sheet = document.getElementById('bottom-sheet');
-const dragTargets = [
-  document.getElementById('sheetHandle'),
-  document.getElementById('mobileStatus')
-];
-let dragStartY = 0, dragStartTranslate = 0, isDragging = false;
+const dragZone = document.getElementById('drag-zone');
+let dragStartY = 0, dragStartX = 0, dragStartTranslate = 0, isDragging = false;
 let lastY = 0, lastTime = 0, velocityY = 0;
-let currentTranslate = 0; // manually tracked — never read DOMMatrix during transition
+let currentTranslate = 0;
+const TAP_THRESHOLD = 5; // px — below this delta = tap, not drag
 
 function setTranslate(y) {
   currentTranslate = y;
@@ -824,7 +843,6 @@ function snapSheet(direction) {
   sheet.classList.remove('sheet-mid', 'sheet-open');
   if (direction === 'open') sheet.classList.add('sheet-open');
   else if (direction === 'mid') sheet.classList.add('sheet-mid');
-  // Sync currentTranslate to the CSS snap destination
   const sheetH = sheet.offsetHeight;
   const peekH = 120;
   const midH = window.innerHeight * 0.52;
@@ -844,7 +862,6 @@ function updateLocateBtnPosition(sheetState) {
   if (!isMobile()) return;
   const btn = document.getElementById('locateBtn');
   const group = document.getElementById('fab-group');
-
   if (sheetState === 'down') {
     btn.classList.remove('state-expanded');
     btn.classList.add('state-collapsed');
@@ -859,56 +876,70 @@ function updateLocateBtnPosition(sheetState) {
   }
 }
 
-function onDragStart(e) {
-  isDragging = true;
+dragZone.addEventListener('touchstart', e => {
   dragStartY = e.touches[0].clientY;
+  dragStartX = e.touches[0].clientX;
   dragStartTranslate = currentTranslate;
   lastY = dragStartY;
   lastTime = Date.now();
   velocityY = 0;
-  sheet.style.transition = 'none';
-  document.getElementById('fab-group').style.transition = 'none';
-}
+  isDragging = false; // not confirmed drag yet
+}, { passive: true });
 
-function onDragMove(e) {
-  if (!isDragging) return;
+dragZone.addEventListener('touchmove', e => {
   const y = e.touches[0].clientY;
   const now = Date.now();
   const dt = now - lastTime;
+  const totalDeltaY = Math.abs(y - dragStartY);
+  const totalDeltaX = Math.abs(e.touches[0].clientX - dragStartX);
+
+  // Only confirm drag if movement exceeds threshold and is more vertical than horizontal
+  if (!isDragging) {
+    if (totalDeltaY < TAP_THRESHOLD) return;
+    if (totalDeltaX > totalDeltaY) return; // horizontal scroll — ignore
+    isDragging = true;
+    sheet.style.transition = 'none';
+    document.getElementById('fab-group').style.transition = 'none';
+  }
+
   if (dt > 0) velocityY = (y - lastY) / dt;
   lastY = y;
   lastTime = now;
   const dy = y - dragStartY;
   const newT = Math.max(0, dragStartTranslate + dy);
   setTranslate(newT);
-  // Move fab-group in real time with sheet top edge
   const sheetH = sheet.offsetHeight;
-  const fabBottom = sheetH - newT + 14;
-  updateFabGroup(fabBottom);
-}
+  updateFabGroup(sheetH - newT + 14);
+}, { passive: true });
 
-function onDragEnd() {
-  if (!isDragging) return;
-  isDragging = false;
+dragZone.addEventListener('touchend', e => {
   sheet.style.transition = '';
   document.getElementById('fab-group').style.transition = '';
 
+  if (!isDragging) {
+    // It was a tap — find element underneath and forward the click
+    const touch = e.changedTouches[0];
+    dragZone.style.pointerEvents = 'none';
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    dragZone.style.pointerEvents = '';
+    if (el && el !== dragZone) el.click();
+    return;
+  }
+
+  isDragging = false;
   const finalT = currentTranslate;
   const sheetH = sheet.offsetHeight;
   const peekH = 120;
   const midH = window.innerHeight * 0.52;
-
   const snapOpen = 0;
   const snapMid  = sheetH - midH;
   const snapDown = sheetH - peekH;
 
   const FLICK = 0.5;
   if (velocityY < -FLICK) {
-    if (finalT > snapMid) snapSheet('mid');
-    else snapSheet('open');
+    snapSheet(finalT > snapMid ? 'mid' : 'open');
   } else if (velocityY > FLICK) {
-    if (finalT < snapMid) snapSheet('mid');
-    else snapSheet('down');
+    snapSheet(finalT < snapMid ? 'mid' : 'down');
   } else {
     const distOpen = Math.abs(finalT - snapOpen);
     const distMid  = Math.abs(finalT - snapMid);
@@ -918,13 +949,7 @@ function onDragEnd() {
     else if (nearest === distMid) snapSheet('mid');
     else snapSheet('down');
   }
-}
-
-dragTargets.forEach(el => {
-  el.addEventListener('touchstart', onDragStart, { passive: true });
-  el.addEventListener('touchmove',  onDragMove,  { passive: true });
-  el.addEventListener('touchend',   onDragEnd,   { passive: true });
-});
+}, { passive: true });
 
 // ── STATUS HELPERS ───────────────────────────────────────────
 function setStatus(html) {
