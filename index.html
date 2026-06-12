@@ -141,9 +141,8 @@
     flex-shrink: 0;
   }
 
-  #locateBtn .loc-label {
-    white-space: nowrap;
-  }
+  #locateBtn.state-collapsed .loc-label { display: none; }
+  #locateBtn.state-expanded .loc-label  { display: inline; }
 
   /* icon color states */
   #locateBtn.loc-inactive .loc-icon { color: var(--locate-gray); }
