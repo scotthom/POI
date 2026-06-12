@@ -6,6 +6,7 @@
 <title>Historical Explorer</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400;500&display=swap');
 
@@ -300,6 +301,13 @@
     line-height: 1.3;
   }
 
+  .site-dist {
+    font-size: 11px;
+    color: var(--text-dimmer);
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+  }
+
   /* ─── DETAIL VIEW ────────────────────────────────────── */
   .detail-view {
     display: none;
@@ -435,6 +443,186 @@
     width: 14px; height: 14px;
     box-shadow: 0 0 0 4px rgba(155,58,42,0.25);
   }
+
+  /* ─── ADD POI BUTTON ─────────────────────────────────── */
+  #addPoiBtn {
+    position: fixed;
+    z-index: 400;
+    cursor: pointer;
+    border: none;
+    background: white;
+    color: #5f6368;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2);
+    transition: background 0.15s;
+    font-size: 20px;
+    bottom: 200px;
+    right: 14px;
+  }
+
+  #addPoiBtn:hover,
+  #addPoiBtn:active { background: #f5f5f5; }
+
+  @media (min-width: 768px) {
+    #addPoiBtn {
+      bottom: 72px !important;
+      right: 376px !important;
+    }
+  }
+
+  /* ─── CUSTOM POI MARKER ──────────────────────────────── */
+  .custom-marker-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .custom-marker-circle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #c084fc;
+    border: 2px solid #f5f0e8;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+
+  .custom-marker-stem {
+    width: 2px;
+    height: 8px;
+    background: #c084fc;
+    border-radius: 0 0 1px 1px;
+  }
+
+  /* ─── ADD FORM ───────────────────────────────────────── */
+  .add-form-view {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .add-form-view.visible { display: flex; }
+
+  .add-form-header {
+    padding: 14px 18px 12px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    color: var(--aged);
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .add-form-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 18px 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-field label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .form-field input,
+  .form-field textarea {
+    width: 100%;
+    background: rgba(245,240,232,0.05);
+    border: 1px solid rgba(245,240,232,0.12);
+    border-radius: 8px;
+    color: var(--parchment);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+
+  .form-field input:focus,
+  .form-field textarea:focus {
+    border-color: rgba(245,240,232,0.3);
+  }
+
+  .form-field textarea {
+    resize: none;
+    height: 90px;
+    line-height: 1.5;
+  }
+
+  .form-error {
+    font-size: 12px;
+    color: #f87171;
+    display: none;
+    margin-top: 4px;
+  }
+
+  .form-error.visible { display: block; }
+
+  .form-save-btn {
+    background: var(--sepia);
+    border: none;
+    color: var(--ink);
+    width: 70%;
+    height: 42px;
+    border-radius: 21px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    align-self: center;
+    transition: background 0.15s;
+    box-shadow: 0 2px 10px rgba(139,105,20,0.4);
+    flex-shrink: 0;
+  }
+
+  .form-save-btn:hover,
+  .form-save-btn:active { background: #a87a1a; }
+
+  .form-cancel-link {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    background: none;
+    border: none;
+    width: 100%;
+    padding: 4px 0;
+  }
+
+  .form-cancel-link:hover { color: var(--parchment); }
+
+  /* ─── DELETE LINK ────────────────────────────────────── */
+  .detail-delete {
+    font-size: 12px;
+    color: rgba(155,58,42,0.6);
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-align: center;
+    width: 100%;
+    padding: 4px 0;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+  }
+
+  .detail-delete:hover { color: var(--rust); }
 </style>
 </head>
 <body>
@@ -453,6 +641,11 @@
 
 <!-- ── MAP ───────────────────────────────────────────────── -->
 <div id="map"></div>
+
+<!-- ── ADD POI BUTTON ─────────────────────────────────────── -->
+<button id="addPoiBtn" onclick="showAddForm()" title="Add a custom location" aria-label="Add a custom location">
+  <i class="ti ti-circle-plus" aria-hidden="true"></i>
+</button>
 
 <!-- ── LOCATE BUTTON ─────────────────────────────────────── -->
 <button id="locateBtn" class="state-collapsed loc-inactive" onclick="locateMe()" title="Find my location" aria-label="Find my location">
@@ -499,6 +692,28 @@
       <div class="detail-title" id="mobileDetailTitle"></div>
       <button class="detail-play-btn" id="mobilePlayBtn" onclick="toggleSpeech()">&#9654; Play</button>
       <div class="detail-text" id="mobileDetailText"></div>
+      <button class="detail-delete" id="mobileDeleteBtn" style="display:none" onclick="deleteCustomSite()">Delete this location</button>
+    </div>
+  </div>
+
+  <!-- Add form view -->
+  <div class="add-form-view" id="mobileAddForm">
+    <div class="add-form-header">Add a place</div>
+    <div class="add-form-body">
+      <div class="form-field">
+        <label for="mobilePoiName">Name</label>
+        <input type="text" id="mobilePoiName" maxlength="60" placeholder="What is this place?" autocomplete="off"/>
+        <div class="form-error" id="mobilePoiError">Please enter a name for this place</div>
+      </div>
+      <div class="form-field">
+        <label for="mobilePoiDesc">Notes</label>
+        <textarea id="mobilePoiDesc" maxlength="400" placeholder="What makes it interesting? (optional)"></textarea>
+      </div>
+      <div class="form-field" id="mobilePoiLocError" style="display:none">
+        <div class="form-error visible">Enable location to save this POI</div>
+      </div>
+      <button class="form-save-btn" onclick="saveCustomSite()">Save</button>
+      <button class="form-cancel-link" onclick="showList('mobile')">Cancel</button>
     </div>
   </div>
 </div>
@@ -524,6 +739,28 @@
       <div class="detail-title" id="desktopDetailTitle"></div>
       <button class="detail-play-btn" id="desktopPlayBtn" onclick="toggleSpeech()">&#9654; Play</button>
       <div class="detail-text" id="desktopDetailText"></div>
+      <button class="detail-delete" id="desktopDeleteBtn" style="display:none" onclick="deleteCustomSite()">Delete this location</button>
+    </div>
+  </div>
+
+  <!-- Add form view -->
+  <div class="add-form-view" id="desktopAddForm">
+    <div class="add-form-header">Add a place</div>
+    <div class="add-form-body">
+      <div class="form-field">
+        <label for="desktopPoiName">Name</label>
+        <input type="text" id="desktopPoiName" maxlength="60" placeholder="What is this place?" autocomplete="off"/>
+        <div class="form-error" id="desktopPoiError">Please enter a name for this place</div>
+      </div>
+      <div class="form-field">
+        <label for="desktopPoiDesc">Notes</label>
+        <textarea id="desktopPoiDesc" maxlength="400" placeholder="What makes it interesting? (optional)"></textarea>
+      </div>
+      <div class="form-field" id="desktopPoiLocError" style="display:none">
+        <div class="form-error visible">Enable location to save this POI</div>
+      </div>
+      <button class="form-save-btn" onclick="saveCustomSite()">Save</button>
+      <button class="form-cancel-link" onclick="showList('desktop')">Cancel</button>
     </div>
   </div>
 </div>
@@ -535,6 +772,28 @@ let currentSites = [], currentNarration = "", isSpeaking = false;
 let userLat, userLng;
 let activeIndex = -1;
 let locationGranted = false;
+
+// ── CUSTOM POI STATE ─────────────────────────────────────────
+let customSites = [];
+let customMarkers = [];
+let activeCustomId = null;
+const LS_KEY = 'poi-explorer-custom-sites';
+
+function loadCustomSites() {
+  try {
+    customSites = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+  } catch(e) {
+    customSites = [];
+  }
+}
+
+function saveCustomSitesToStorage() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(customSites));
+  } catch(e) {
+    console.warn('localStorage write failed:', e);
+  }
+}
 
 // ── MOBILE DETECT ────────────────────────────────────────────
 const isMobile = () => window.innerWidth < 768;
@@ -746,7 +1005,7 @@ async function onLocation(lat, lng) {
     }
     currentSites = sites.slice(0, 3);
     renderSites();
-    setStatus(`<span class="pulse"></span>Found ${currentSites.length} historical sites nearby`);
+    updateStatus();
   } catch(e) {
     setStatus(`Error: ${e.message}`);
   }
@@ -800,15 +1059,10 @@ function stripHtml(html) {
   return d.textContent || d.innerText || '';
 }
 
-// ── RENDER ───────────────────────────────────────────────────
+// ── RENDER WIKIPEDIA MARKERS ──────────────────────────────────
 function renderSites() {
   siteMarkers.forEach(m => map.removeLayer(m));
   siteMarkers = [];
-
-  const mobileList = document.getElementById('mobileSitesList');
-  const desktopList = document.getElementById('desktopSitesList');
-  mobileList.innerHTML = '';
-  desktopList.innerHTML = '';
 
   const colors = ['#8b6914', '#9b3a2a', '#4a6741'];
   const nums = ['I', 'II', 'III'];
@@ -824,38 +1078,107 @@ function renderSites() {
       .bindPopup(`<strong>${site.title}</strong><br><small>${Math.round(site.dist)}m away</small>`);
     marker.on('click', () => selectSite(i));
     siteMarkers.push(marker);
+  });
 
-    // Card — title + distance only
+  renderAllCards();
+
+  const allCoords = currentSites.map(s => [s.lat, s.lon])
+    .concat(customSites.map(s => [s.lat, s.lon]))
+    .concat(userLat ? [[userLat, userLng]] : []);
+  if (allCoords.length > 0) {
+    map.fitBounds(L.latLngBounds(allCoords), { padding: [60, 60] });
+  }
+}
+
+// ── RENDER CUSTOM MARKERS ─────────────────────────────────────
+function renderCustomMarkers() {
+  customMarkers.forEach(m => map.removeLayer(m));
+  customMarkers = [];
+
+  document.fonts.ready.then(() => {
+    customSites.forEach(site => {
+      const icon = L.divIcon({
+        className: '',
+        html: `<div class="custom-marker-wrap"><div class="custom-marker-circle"></div><div class="custom-marker-stem"></div></div>`,
+        iconSize: [18, 26], iconAnchor: [9, 26], popupAnchor: [0, -28]
+      });
+      const marker = L.marker([site.lat, site.lon], { icon })
+        .addTo(map)
+        .bindPopup(`<strong>${site.title}</strong><br><small>Your place</small>`);
+      marker.on('click', () => selectCustomSite(site.id));
+      customMarkers.push(marker);
+    });
+  });
+}
+
+// ── RENDER ALL CARDS (merged + sorted by distance) ────────────
+function renderAllCards() {
+  const mobileList = document.getElementById('mobileSitesList');
+  const desktopList = document.getElementById('desktopSitesList');
+  mobileList.innerHTML = '';
+  desktopList.innerHTML = '';
+
+  // Build unified list with distance
+  const wikiItems = currentSites.map((s, i) => ({
+    type: 'wiki',
+    index: i,
+    title: s.title,
+    dist: userLat ? haversine(userLat, userLng, s.lat, s.lon) : s.dist
+  }));
+
+  const customItems = customSites.map(s => ({
+    type: 'custom',
+    id: s.id,
+    title: s.title,
+    dist: userLat ? haversine(userLat, userLng, s.lat, s.lon) : null
+  }));
+
+  const allItems = [...wikiItems, ...customItems]
+    .sort((a, b) => {
+      const da = a.dist != null ? a.dist : 99999;
+      const db = b.dist != null ? b.dist : 99999;
+      return da - db;
+    });
+
+  if (allItems.length === 0) {
+    const empty = '<div class="empty-state">Your historical sites will appear here once located.</div>';
+    mobileList.innerHTML = empty;
+    desktopList.innerHTML = empty;
+    return;
+  }
+
+  allItems.forEach(item => {
+    const distText = item.dist != null ? `${Math.round(item.dist)} m away` : '';
+    const titleText = item.type === 'custom' ? `★ ${item.title}` : item.title;
+
     const cardHtml = `
-      <div class="site-num">${nums[i]}</div>
-      <div class="site-name">${site.title}</div>
+      <div class="site-name">${titleText}</div>
+      ${distText ? `<div class="site-dist">${distText}</div>` : ''}
     `;
 
     const mCard = document.createElement('div');
     mCard.className = 'site-card';
-    mCard.id = `mcard-${i}`;
     mCard.innerHTML = cardHtml;
-    mCard.onclick = () => selectSite(i);
+    mCard.onclick = item.type === 'wiki'
+      ? () => selectSite(item.index)
+      : () => selectCustomSite(item.id);
     mobileList.appendChild(mCard);
 
     const dCard = document.createElement('div');
     dCard.className = 'site-card';
-    dCard.id = `dcard-${i}`;
     dCard.innerHTML = cardHtml;
-    dCard.onclick = () => selectSite(i);
+    dCard.onclick = item.type === 'wiki'
+      ? () => selectSite(item.index)
+      : () => selectCustomSite(item.id);
     desktopList.appendChild(dCard);
   });
-
-  const bounds = L.latLngBounds(
-    currentSites.map(s => [s.lat, s.lon]).concat([[userLat, userLng]])
-  );
-  map.fitBounds(bounds, { padding: [60, 60] });
 }
 
 // ── SELECT SITE — switch to detail view ───────────────────────
 function selectSite(i) {
   stopSpeech();
   activeIndex = i;
+  activeCustomId = null;
 
   const site = currentSites[i];
   currentNarration = site.extract.slice(0, 800);
@@ -863,18 +1186,15 @@ function selectSite(i) {
   map.setView([site.lat, site.lon], 15);
   siteMarkers[i]?.openPopup();
 
-  // Populate both detail views
   ['mobile', 'desktop'].forEach(ctx => {
     document.getElementById(`${ctx}DetailTitle`).textContent = site.title;
     document.getElementById(`${ctx}DetailText`).textContent = currentNarration;
     document.getElementById(`${ctx}PlayBtn`).textContent = '\u25B6 Play';
+    document.getElementById(`${ctx}DeleteBtn`).style.display = 'none';
+    document.getElementById(`${ctx}SitesList`).style.display = 'none';
+    document.getElementById(`${ctx}Detail`).classList.add('visible');
+    document.getElementById(`${ctx}AddForm`).classList.remove('visible');
   });
-
-  // Show detail, hide list
-  document.getElementById('mobileSitesList').style.display = 'none';
-  document.getElementById('mobileDetail').classList.add('visible');
-  document.getElementById('desktopSitesList').style.display = 'none';
-  document.getElementById('desktopDetail').classList.add('visible');
 
   if (isMobile()) snapSheet('open');
 }
@@ -882,18 +1202,130 @@ function selectSite(i) {
 // ── BACK TO LIST ─────────────────────────────────────────────
 function showList(ctx) {
   stopSpeech();
-  if (ctx === 'mobile' || ctx === 'both') {
-    document.getElementById('mobileSitesList').style.display = '';
-    document.getElementById('mobileDetail').classList.remove('visible');
-    snapSheet('mid');
-  }
-  if (ctx === 'desktop' || ctx === 'both') {
-    document.getElementById('desktopSitesList').style.display = '';
-    document.getElementById('desktopDetail').classList.remove('visible');
-  }
+  activeCustomId = null;
+  const contexts = ctx === 'both' ? ['mobile', 'desktop'] : [ctx];
+  contexts.forEach(c => {
+    document.getElementById(`${c}SitesList`).style.display = '';
+    document.getElementById(`${c}Detail`).classList.remove('visible');
+    document.getElementById(`${c}AddForm`).classList.remove('visible');
+  });
+  if (isMobile()) snapSheet('mid');
 }
 
-// ── TTS (chunked for iOS) ─────────────────────────────────────
+// ── SELECT CUSTOM SITE ────────────────────────────────────────
+function selectCustomSite(id) {
+  stopSpeech();
+  activeCustomId = id;
+  const site = customSites.find(s => s.id === id);
+  if (!site) return;
+
+  currentNarration = site.description || site.title;
+  map.setView([site.lat, site.lon], 15);
+
+  ['mobile', 'desktop'].forEach(ctx => {
+    document.getElementById(`${ctx}DetailTitle`).textContent = site.title;
+    document.getElementById(`${ctx}DetailText`).textContent = site.description || '';
+    document.getElementById(`${ctx}PlayBtn`).textContent = '\u25B6 Play';
+    document.getElementById(`${ctx}DeleteBtn`).style.display = '';
+    document.getElementById(`${ctx}SitesList`).style.display = 'none';
+    document.getElementById(`${ctx}Detail`).classList.add('visible');
+    document.getElementById(`${ctx}AddForm`).classList.remove('visible');
+  });
+
+  if (isMobile()) snapSheet('open');
+}
+
+// ── SHOW ADD FORM ─────────────────────────────────────────────
+function showAddForm() {
+  stopSpeech();
+
+  // Clear form fields
+  ['mobile', 'desktop'].forEach(ctx => {
+    const nameEl = document.getElementById(`${ctx}PoiName`);
+    const descEl = document.getElementById(`${ctx}PoiDesc`);
+    const errEl  = document.getElementById(`${ctx}PoiError`);
+    const locEl  = document.getElementById(`${ctx}PoiLocError`);
+    if (nameEl) nameEl.value = '';
+    if (descEl) descEl.value = '';
+    if (errEl)  errEl.classList.remove('visible');
+    if (locEl)  locEl.style.display = 'none';
+
+    document.getElementById(`${ctx}SitesList`).style.display = 'none';
+    document.getElementById(`${ctx}Detail`).classList.remove('visible');
+    document.getElementById(`${ctx}AddForm`).classList.add('visible');
+  });
+
+  if (isMobile()) snapSheet('open');
+
+  // Focus name field after sheet animates
+  setTimeout(() => {
+    const nameEl = isMobile()
+      ? document.getElementById('mobilePoiName')
+      : document.getElementById('desktopPoiName');
+    if (nameEl) nameEl.focus();
+  }, 380);
+}
+
+// ── SAVE CUSTOM SITE ──────────────────────────────────────────
+function saveCustomSite() {
+  const ctx = isMobile() ? 'mobile' : 'desktop';
+  const nameEl  = document.getElementById(`${ctx}PoiName`);
+  const descEl  = document.getElementById(`${ctx}PoiDesc`);
+  const errEl   = document.getElementById(`${ctx}PoiError`);
+  const locEl   = document.getElementById(`${ctx}PoiLocError`);
+
+  // Location check
+  if (!locationGranted || userLat == null) {
+    locEl.style.display = '';
+    return;
+  } else {
+    locEl.style.display = 'none';
+  }
+
+  // Name validation
+  const name = nameEl.value.trim();
+  if (!name) {
+    errEl.classList.add('visible');
+    nameEl.focus();
+    return;
+  }
+  errEl.classList.remove('visible');
+
+  const site = {
+    id: crypto.randomUUID(),
+    title: name,
+    description: descEl.value.trim(),
+    lat: userLat,
+    lon: userLng,
+    createdAt: new Date().toISOString()
+  };
+
+  customSites.push(site);
+  saveCustomSitesToStorage();
+  renderCustomMarkers();
+  renderAllCards();
+  updateStatus();
+  showList(ctx);
+}
+
+// ── DELETE CUSTOM SITE ────────────────────────────────────────
+function deleteCustomSite() {
+  if (!activeCustomId) return;
+  customSites = customSites.filter(s => s.id !== activeCustomId);
+  saveCustomSitesToStorage();
+
+  // Remove marker from map
+  renderCustomMarkers();
+  renderAllCards();
+  updateStatus();
+  showList(isMobile() ? 'mobile' : 'desktop');
+  activeCustomId = null;
+}
+
+function updateStatus() {
+  if (currentSites.length + customSites.length === 0) return;
+  setStatus('<span class="pulse"></span>POI');
+}
 let ttsChunks = [], ttsIndex = 0;
 
 function chunkText(text, maxLen = 180) {
@@ -992,7 +1424,10 @@ window.addEventListener('resize', () => {
 });
 
 // ── INIT ──────────────────────────────────────────────────────
-// On mobile, start sheet in collapsed/peek position
+loadCustomSites();
+renderCustomMarkers();
+renderAllCards();
+
 if (isMobile()) {
   snapSheet('down');
   document.getElementById('locateBtn').style.bottom = '148px';
