@@ -90,7 +90,7 @@
 
   /* ─── LOCATE BUTTON (map overlay) ───────────────────── */
   #locateBtn {
-    position: fixed;
+    position: relative;
     z-index: 400;
     cursor: pointer;
     border: none;
@@ -105,10 +105,21 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2);
   }
 
+  /* ─── FAB GROUP ──────────────────────────────────────── */
+  #fab-group {
+    position: fixed;
+    right: 14px;
+    z-index: 400;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    transition: bottom 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    bottom: 148px;
+  }
+
   /* collapsed: icon-only circle */
   #locateBtn.state-collapsed {
-    bottom: 148px;
-    right: 14px;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -118,8 +129,6 @@
 
   /* expanded: pill with label */
   #locateBtn.state-expanded {
-    bottom: calc(var(--sheet-peek) + 14px);
-    right: 14px;
     height: 36px;
     border-radius: 18px;
     padding: 0 14px 0 10px;
@@ -145,14 +154,15 @@
   @media (min-width: 768px) {
     :root { --header-h: 56px; }
 
-    #map {
-      right: 360px;
+    #map { right: 360px; }
+
+    #fab-group {
+      bottom: 24px !important;
+      right: 376px !important;
+      transition: none !important;
     }
 
     #locateBtn {
-      /* on desktop: always in map area, collapsed style */
-      bottom: 24px !important;
-      right: 376px !important;
       width: 40px !important;
       height: 40px !important;
       border-radius: 50% !important;
@@ -163,13 +173,8 @@
 
     #locateBtn .loc-label { display: none; }
 
-    #bottom-sheet {
-      display: none !important;
-    }
-
-    #desktop-sidebar {
-      display: flex !important;
-    }
+    #bottom-sheet { display: none !important; }
+    #desktop-sidebar { display: flex !important; }
   }
 
   /* ─── DESKTOP SIDEBAR ───────────────────────────────── */
@@ -448,7 +453,7 @@
 
   /* ─── ADD POI BUTTON ─────────────────────────────────── */
   #addPoiBtn {
-    position: fixed;
+    position: relative;
     z-index: 400;
     cursor: pointer;
     border: none;
@@ -463,19 +468,10 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2);
     transition: background 0.15s;
     font-size: 20px;
-    bottom: 200px;
-    right: 14px;
   }
 
   #addPoiBtn:hover,
   #addPoiBtn:active { background: #f5f5f5; }
-
-  @media (min-width: 768px) {
-    #addPoiBtn {
-      bottom: 72px !important;
-      right: 376px !important;
-    }
-  }
 
   /* ─── CUSTOM POI MARKER ──────────────────────────────── */
   .custom-marker-wrap {
@@ -644,32 +640,31 @@
 <!-- ── MAP ───────────────────────────────────────────────── -->
 <div id="map"></div>
 
-<!-- ── ADD POI BUTTON ─────────────────────────────────────── -->
-<button id="addPoiBtn" onclick="showAddForm()" title="Add a custom location" aria-label="Add a custom location">
-  <i class="ti ti-circle-plus" aria-hidden="true"></i>
-</button>
-
-<!-- ── LOCATE BUTTON ─────────────────────────────────────── -->
-<button id="locateBtn" class="state-collapsed loc-inactive" onclick="locateMe()" title="Find my location" aria-label="Find my location">
-  <!-- target/crosshair icon — swapped to slashed when denied -->
-  <svg id="locIconActive" class="loc-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
-    <circle cx="12" cy="12" r="3" fill="currentColor"/>
-    <line x1="12" y1="2" x2="12" y2="6"  stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="2"  y1="12" x2="6"  y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="18" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-  </svg>
-  <svg id="locIconDenied" class="loc-icon" style="display:none" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3 2"/>
-    <line x1="12" y1="2" x2="12" y2="6"  stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="2"  y1="12" x2="6"  y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="18" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="4" y1="4" x2="20" y2="20"  stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-  </svg>
-  <span class="loc-label" id="locLabel">Your location</span>
-</button>
+<!-- ── FAB GROUP ───────────────────────────────────────────── -->
+<div id="fab-group">
+  <button id="addPoiBtn" onclick="showAddForm()" title="Add a custom location" aria-label="Add a custom location">
+    <i class="ti ti-circle-plus" aria-hidden="true"></i>
+  </button>
+  <button id="locateBtn" class="state-collapsed loc-inactive" onclick="locateMe()" title="Find my location" aria-label="Find my location">
+    <svg id="locIconActive" class="loc-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
+      <circle cx="12" cy="12" r="3" fill="currentColor"/>
+      <line x1="12" y1="2" x2="12" y2="6"  stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="2"  y1="12" x2="6"  y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="18" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <svg id="locIconDenied" class="loc-icon" style="display:none" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3 2"/>
+      <line x1="12" y1="2" x2="12" y2="6"  stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="2"  y1="12" x2="6"  y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="18" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="4" y1="4" x2="20" y2="20"  stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <span class="loc-label" id="locLabel">Your location</span>
+  </button>
+</div>
 
 <!-- ── MOBILE BOTTOM SHEET ───────────────────────────────── -->
 <div id="bottom-sheet" aria-label="Nearby sites panel">
@@ -839,20 +834,28 @@ function snapSheet(direction) {
   updateLocateBtnPosition(direction);
 }
 
+function updateFabGroup(bottomPx) {
+  const group = document.getElementById('fab-group');
+  if (!isMobile()) return;
+  group.style.bottom = bottomPx + 'px';
+}
+
 function updateLocateBtnPosition(sheetState) {
   if (!isMobile()) return;
   const btn = document.getElementById('locateBtn');
+  const group = document.getElementById('fab-group');
+
   if (sheetState === 'down') {
     btn.classList.remove('state-expanded');
     btn.classList.add('state-collapsed');
-    btn.style.bottom = '148px';
+    group.style.bottom = '148px';
   } else {
     btn.classList.remove('state-collapsed');
     btn.classList.add('state-expanded');
     const peekPx = sheetState === 'mid'
       ? window.innerHeight * 0.52
       : (window.innerHeight - 52 - 20);
-    btn.style.bottom = (peekPx + 14) + 'px';
+    group.style.bottom = (peekPx + 14) + 'px';
   }
 }
 
@@ -864,6 +867,7 @@ function onDragStart(e) {
   lastTime = Date.now();
   velocityY = 0;
   sheet.style.transition = 'none';
+  document.getElementById('fab-group').style.transition = 'none';
 }
 
 function onDragMove(e) {
@@ -877,12 +881,17 @@ function onDragMove(e) {
   const dy = y - dragStartY;
   const newT = Math.max(0, dragStartTranslate + dy);
   setTranslate(newT);
+  // Move fab-group in real time with sheet top edge
+  const sheetH = sheet.offsetHeight;
+  const fabBottom = sheetH - newT + 14;
+  updateFabGroup(fabBottom);
 }
 
 function onDragEnd() {
   if (!isDragging) return;
   isDragging = false;
   sheet.style.transition = '';
+  document.getElementById('fab-group').style.transition = '';
 
   const finalT = currentTranslate;
   const sheetH = sheet.offsetHeight;
@@ -1433,7 +1442,7 @@ renderAllCards();
 
 if (isMobile()) {
   snapSheet('down');
-  document.getElementById('locateBtn').style.bottom = '148px';
+  document.getElementById('fab-group').style.bottom = '148px';
 }
 </script>
 </body>
