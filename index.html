@@ -1453,6 +1453,10 @@ window.addEventListener('resize', () => {
   }
 });
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/POI/sw.js');
+}
+
 // ── INIT ──────────────────────────────────────────────────────
 loadCustomSites();
 renderCustomMarkers();
