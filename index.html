@@ -277,19 +277,7 @@
     cursor: grab;
   }
 
-  .sheet-status {
-    padding: 12px 18px 10px;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
-    color: var(--text-dim);
-    letter-spacing: 0.04em;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-  }
-
-  .sheet-sites {
+.sheet-sites {
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -690,11 +678,7 @@
     <div class="sheet-handle"></div>
   </div>
 
-  <div class="sheet-status" id="mobileStatus" style="display:none">
-    POI
-  </div>
-
-  <!-- List view -->
+<!-- List view -->
   <div class="sheet-sites" id="mobileSitesList">
     <div class="empty-state">Your historical sites will appear here once located.</div>
   </div>
@@ -787,7 +771,6 @@
 let map, userMarker, siteMarkers = [];
 let currentSites = [], currentNarration = "", isSpeaking = false;
 let userLat, userLng;
-let activeIndex = -1;
 let locationGranted = false;
 
 // ── CUSTOM POI STATE ─────────────────────────────────────────
@@ -953,8 +936,6 @@ dragZone.addEventListener('touchend', e => {
 // ── STATUS HELPERS ───────────────────────────────────────────
 function setStatus(html) {
   document.getElementById('desktopStatus').innerHTML = html;
-  // Mobile status bar hidden — drag handle is the only affordance needed
-  document.getElementById('mobileStatus').style.display = 'none';
 }
 
 // ── LOCATE BUTTON STATE ──────────────────────────────────────
@@ -1049,16 +1030,16 @@ async function onLocation(lat, lng) {
 
 // ── FETCH ────────────────────────────────────────────────────
 async function fetchNearbySites(lat, lng) {
-  const geoUrl = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=5000&gslimit=20&format=json&origin=*`;
+  const geoUrl = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=5000&gslimit=8&format=json&origin=*`;
   const geoData = await (await fetch(geoUrl)).json();
   const pages = geoData.query?.geosearch || [];
   if (pages.length === 0) return [];
 
-  const topIds = pages.slice(0, 10).map(p => p.pageid).join('|');
+  const topIds = pages.slice(0, 5).map(p => p.pageid).join('|');
   const extUrl = `https://en.wikipedia.org/w/api.php?action=query&pageids=${topIds}&prop=extracts|coordinates&exintro=1&exchars=800&format=json&origin=*`;
   const extData = await (await fetch(extUrl)).json();
 
-  const enriched = pages.slice(0, 10).map(p => {
+  const enriched = pages.slice(0, 5).map(p => {
     const page = extData.query?.pages?.[p.pageid];
     const extract = page?.extract || '';
     const coords = page?.coordinates?.[0] || { lat: p.lat, lon: p.lon };
@@ -1111,7 +1092,7 @@ function renderSites() {
     });
     const marker = L.marker([site.lat, site.lon], { icon })
       .addTo(map)
-      .bindPopup(`<strong>${site.title}</strong><br><small>${Math.round(site.dist)}m away</small>`);
+      .bindPopup(`<strong>${site.title}</strong><br><small>${formatDist(site.dist)}</small>`);
     marker.on('click', () => selectSite(i));
     siteMarkers.push(marker);
   });
@@ -1147,6 +1128,25 @@ function renderCustomMarkers() {
   });
 }
 
+// ── DISTANCE FORMATTING ───────────────────────────────────────
+const useImperial = (() => {
+  try {
+    const region = new Intl.Locale(navigator.language).region;
+    return ['US', 'GB', 'MM', 'LR'].includes(region);
+  } catch { return false; }
+})();
+
+function formatDist(meters) {
+  if (useImperial) {
+    const ft = meters * 3.28084;
+    if (ft < 1000) return `${Math.round(ft)} ft away`;
+    return `${(ft / 5280).toFixed(1)} mi away`;
+  } else {
+    if (meters < 1000) return `${Math.round(meters)} m away`;
+    return `${(meters / 1000).toFixed(1)} km away`;
+  }
+}
+
 // ── RENDER ALL CARDS (merged + sorted by distance) ────────────
 function renderAllCards() {
   const mobileList = document.getElementById('mobileSitesList');
@@ -1159,7 +1159,7 @@ function renderAllCards() {
     type: 'wiki',
     index: i,
     title: s.title,
-    dist: userLat ? haversine(userLat, userLng, s.lat, s.lon) : s.dist
+    dist: s.dist
   }));
 
   const customItems = customSites.map(s => ({
@@ -1184,7 +1184,7 @@ function renderAllCards() {
   }
 
   allItems.forEach(item => {
-    const distText = item.dist != null ? `${Math.round(item.dist)} m away` : '';
+    const distText = item.dist != null ? formatDist(item.dist) : '';
     const titleText = item.type === 'custom' ? `★ ${item.title}` : item.title;
 
     const cardHtml = `
@@ -1213,7 +1213,6 @@ function renderAllCards() {
 // ── SELECT SITE — switch to detail view ───────────────────────
 function selectSite(i) {
   stopSpeech();
-  activeIndex = i;
   activeCustomId = null;
 
   const site = currentSites[i];
@@ -1425,7 +1424,7 @@ function speakChunk() {
     if (e.error === 'interrupted') return; // user stopped
     isSpeaking = false;
     setSpeakingUI(false);
-    setVoiceLabel('Error — try again');
+    console.warn('TTS error:', e.error);
   };
 
   window.speechSynthesis.speak(utt);
@@ -1443,11 +1442,6 @@ function setSpeakingUI(speaking) {
     const el = document.getElementById(id);
     if (el) el.textContent = speaking ? '\u23F8 Stop' : '\u25B6 Play';
   });
-}
-
-// Voices may load async
-if (window.speechSynthesis) {
-  window.speechSynthesis.addEventListener('voiceschanged', () => {});
 }
 
 // ── RESIZE: re-snap button on orientation change ──────────────
