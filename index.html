@@ -1023,22 +1023,17 @@ async function handleSession(session) {
   autoLocateIfPermitted();
 }
 
-async function autoLocateIfPermitted() {
-  try {
-    const result = await navigator.permissions.query({ name: 'geolocation' });
-    if (result.state === 'granted') {
-      // Wait for map to initialize before firing locate
-      const waitForMap = setInterval(() => {
-        if (map) {
-          clearInterval(waitForMap);
-          locateMe();
-        }
-      }, 100);
+function autoLocateIfPermitted() {
+  if (!localStorage.getItem('geoPermissionGranted')) return;
+
+  // Permission previously granted — bypass broken iOS Permissions API
+  // go directly to getCurrentPosition, handle denial in error callback
+  const waitForMap = setInterval(() => {
+    if (map) {
+      clearInterval(waitForMap);
+      locateMe();
     }
-    // 'prompt' or 'denied' — do nothing, let user tap the locate button
-  } catch (e) {
-    // Permissions API unsupported on this browser — fail silently
-  }
+  }, 100);
 }
 // including after the OAuth redirect. Single source of truth — avoids the
 // JWT-not-attached race condition that causes 403 on the profiles read.
@@ -1271,6 +1266,7 @@ async function locateMe() {
       let msg = '';
       switch (err.code) {
         case err.PERMISSION_DENIED:
+          localStorage.removeItem('geoPermissionGranted'); // permission revoked — clear flag
           if (isIOS) {
             msg = 'Location blocked. To fix: Settings → Privacy & Security → Location Services → Safari → While Using.';
           } else if (isAndroid) {
@@ -1299,6 +1295,7 @@ async function locateMe() {
 async function onLocation(lat, lng) {
   userLat = lat; userLng = lng;
   locationGranted = true;
+  localStorage.setItem('geoPermissionGranted', '1');
   setLocateState('active');
 
   if (userMarker) map.removeLayer(userMarker);

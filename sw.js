@@ -1,4 +1,4 @@
-const VERSION = 'v7'; // bump on every deploy
+const VERSION = 'v8'; // bump on every deploy
 const CACHE = `poi-explorer-${VERSION}`;
 
 self.addEventListener('install', e => {
