@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400;500&display=swap');
 
@@ -625,6 +626,149 @@
   }
 
   .detail-delete:hover { color: var(--rust); }
+
+  /* ─── LOGIN SCREEN ───────────────────────────────────── */
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--surface-deep);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 40px 24px;
+  }
+
+  #login-screen.hidden { display: none; }
+
+  .login-icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .login-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--aged);
+    text-align: center;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+
+  .login-subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.6;
+    max-width: 280px;
+    letter-spacing: 0.02em;
+  }
+
+  #googleSignInBtn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    color: #3c4043;
+    border: none;
+    border-radius: 24px;
+    padding: 0 24px 0 16px;
+    height: 48px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: box-shadow 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  #googleSignInBtn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+
+  #googleSignInBtn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ─── PENDING SCREEN ─────────────────────────────────── */
+  #pending-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--surface-deep);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px 24px;
+  }
+
+  #pending-screen.hidden { display: none; }
+
+  .pending-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--aged);
+    text-align: center;
+  }
+
+  .pending-text {
+    font-size: 13px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.7;
+    max-width: 280px;
+  }
+
+  #signOutLinkPending {
+    font-size: 12px;
+    color: var(--text-dimmer);
+    cursor: pointer;
+    background: none;
+    border: none;
+    letter-spacing: 0.04em;
+    margin-top: 8px;
+  }
+
+  #signOutLinkPending:hover { color: var(--text-dim); }
+
+  /* ─── AUTH HEADER BADGE ──────────────────────────────── */
+  #auth-badge {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  #userDisplayName {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #signOutBtn {
+    font-size: 11px;
+    color: var(--text-dimmer);
+    background: none;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    padding: 4px 0;
+    transition: color 0.15s;
+  }
+
+  #signOutBtn:hover { color: var(--text-dim); }
 </style>
 </head>
 <body>
@@ -639,7 +783,37 @@
     <div class="header-title">Historical Explorer</div>
     <div class="header-subtitle">Nearby places with stories</div>
   </div>
+  <div id="auth-badge">
+    <span id="userDisplayName"></span>
+    <button id="signOutBtn" onclick="signOut()">Sign out</button>
+  </div>
 </header>
+
+<!-- ── LOGIN SCREEN ──────────────────────────────────────── -->
+<div id="login-screen">
+  <svg class="login-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="14" cy="14" r="13" fill="rgba(139,105,20,0.15)" stroke="rgba(139,105,20,0.4)" stroke-width="1"/>
+    <path d="M14 6C10.69 6 8 8.69 8 12c0 4.5 6 10 6 10s6-5.5 6-10c0-3.31-2.69-6-6-6zm0 8.5c-1.38 0-2.5-1.12-2.5-2.5S12.62 9.5 14 9.5s2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="var(--sepia)"/>
+  </svg>
+  <div class="login-title">Historical Explorer</div>
+  <div class="login-subtitle">Discover the hidden history of places around you. Sign in to contribute your own discoveries.</div>
+  <button id="googleSignInBtn" onclick="signInWithGoogle()">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+    Continue with Google
+  </button>
+</div>
+
+<!-- ── PENDING APPROVAL SCREEN ───────────────────────────── -->
+<div id="pending-screen" class="hidden">
+  <div class="pending-title">You're on the list</div>
+  <div class="pending-text">Your account is awaiting approval. You'll be able to explore and contribute once approved. Check back soon.</div>
+  <button id="signOutLinkPending" onclick="signOut()">Sign out</button>
+</div>
 
 <!-- ── MAP ───────────────────────────────────────────────── -->
 <div id="map"></div>
@@ -767,6 +941,95 @@
 </div>
 
 <script>
+// ── SUPABASE INIT ────────────────────────────────────────────
+const SUPABASE_URL  = 'https://ecouhqvbqqarnjxebhyj.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjb3VocXZicXFhcm5qeGViaHlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNzY5MzgsImV4cCI6MjA5Njk1MjkzOH0.VtT95oAB4RcqZs4PwhL2Ar5-MltriXhnVLHMMvBKWm0';
+const GROUP_ID      = 'test';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── AUTH STATE ───────────────────────────────────────────────
+let currentUser   = null;
+let currentRole   = null;
+
+async function signInWithGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: 'https://scotthom.github.io/POI/' }
+  });
+  if (error) console.error('Sign in error:', error.message);
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  currentUser = null;
+  currentRole = null;
+  showLoginScreen();
+}
+
+function showLoginScreen() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('pending-screen').classList.add('hidden');
+  document.getElementById('auth-badge').style.display = 'none';
+}
+
+function showPendingScreen() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('pending-screen').classList.remove('hidden');
+  document.getElementById('auth-badge').style.display = 'none';
+}
+
+function showApp(displayName) {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('pending-screen').classList.add('hidden');
+  document.getElementById('auth-badge').style.display = 'flex';
+  document.getElementById('userDisplayName').textContent = displayName || '';
+}
+
+async function handleSession(session) {
+  if (!session) { showLoginScreen(); return; }
+
+  currentUser = session.user;
+
+  // Fetch role from profiles table
+  const { data: profile, error } = await sb
+    .from('profiles')
+    .select('role, display_name')
+    .eq('user_id', currentUser.id)
+    .single();
+
+  if (error || !profile) {
+    // Profile not yet created by trigger — wait briefly and retry once
+    await new Promise(r => setTimeout(r, 1500));
+    const { data: retryProfile } = await sb
+      .from('profiles')
+      .select('role, display_name')
+      .eq('user_id', currentUser.id)
+      .single();
+    if (!retryProfile) { showPendingScreen(); return; }
+    currentRole = retryProfile.role;
+    if (currentRole === 'pending') { showPendingScreen(); return; }
+    showApp(retryProfile.display_name);
+  } else {
+    currentRole = profile.role;
+    if (currentRole === 'pending') { showPendingScreen(); return; }
+    showApp(profile.display_name);
+  }
+
+  // Load shared POIs from Supabase
+  loadSharedPOIs();
+  subscribeToSharedPOIs();
+}
+
+// On every page load — catches OAuth redirect callback
+sb.auth.getSession().then(({ data: { session } }) => {
+  handleSession(session);
+});
+
+// Catches sign-in / sign-out events
+sb.auth.onAuthStateChange((_event, session) => {
+  handleSession(session);
+});
+
 // ── STATE ────────────────────────────────────────────────────
 let map, userMarker, siteMarkers = [];
 let currentSites = [], currentNarration = "", isSpeaking = false;
@@ -1302,14 +1565,13 @@ function showAddForm() {
 }
 
 // ── SAVE CUSTOM SITE ──────────────────────────────────────────
-function saveCustomSite() {
+async function saveCustomSite() {
   const ctx = isMobile() ? 'mobile' : 'desktop';
   const nameEl  = document.getElementById(`${ctx}PoiName`);
   const descEl  = document.getElementById(`${ctx}PoiDesc`);
   const errEl   = document.getElementById(`${ctx}PoiError`);
   const locEl   = document.getElementById(`${ctx}PoiLocError`);
 
-  // Location check
   if (!locationGranted || userLat == null) {
     locEl.style.display = '';
     return;
@@ -1317,7 +1579,6 @@ function saveCustomSite() {
     locEl.style.display = 'none';
   }
 
-  // Name validation
   const name = nameEl.value.trim();
   if (!name) {
     errEl.classList.add('visible');
@@ -1326,17 +1587,46 @@ function saveCustomSite() {
   }
   errEl.classList.remove('visible');
 
+  if (!currentUser || currentRole === 'pending') {
+    errEl.textContent = 'You must be approved to add POIs.';
+    errEl.classList.add('visible');
+    return;
+  }
+
+  const { data: profile } = await sb
+    .from('profiles')
+    .select('display_name')
+    .eq('user_id', currentUser.id)
+    .single();
+
+  const { data, error } = await sb.from('pois').insert({
+    group_id:     GROUP_ID,
+    user_id:      currentUser.id,
+    display_name: profile?.display_name || 'Explorer',
+    name:         name,
+    lat:          userLat,
+    lng:          userLng,
+    notes:        descEl.value.trim()
+  }).select().single();
+
+  if (error) {
+    console.error('Save POI error:', error.message);
+    errEl.textContent = 'Failed to save. Please try again.';
+    errEl.classList.add('visible');
+    return;
+  }
+
   const site = {
-    id: crypto.randomUUID(),
-    title: name,
-    description: descEl.value.trim(),
-    lat: userLat,
-    lon: userLng,
-    createdAt: new Date().toISOString()
+    id:          data.id,
+    title:       data.name,
+    description: data.notes,
+    lat:         data.lat,
+    lon:         data.lng,
+    addedBy:     data.display_name,
+    createdAt:   data.created_at
   };
 
   customSites.push(site);
-  saveCustomSitesToStorage();
   renderCustomMarkers();
   renderAllCards();
   updateStatus();
@@ -1344,17 +1634,88 @@ function saveCustomSite() {
 }
 
 // ── DELETE CUSTOM SITE ────────────────────────────────────────
-function deleteCustomSite() {
+async function deleteCustomSite() {
   if (!activeCustomId) return;
-  customSites = customSites.filter(s => s.id !== activeCustomId);
-  saveCustomSitesToStorage();
 
-  // Remove marker from map
+  const { error } = await sb
+    .from('pois')
+    .delete()
+    .eq('id', activeCustomId);
+
+  if (error) {
+    console.error('Delete POI error:', error.message);
+    return;
+  }
+
+  customSites = customSites.filter(s => s.id !== activeCustomId);
   renderCustomMarkers();
   renderAllCards();
   updateStatus();
   showList(isMobile() ? 'mobile' : 'desktop');
   activeCustomId = null;
+}
+
+// ── LOAD SHARED POIS FROM SUPABASE ───────────────────────────
+async function loadSharedPOIs() {
+  const { data, error } = await sb
+    .from('pois')
+    .select('*')
+    .eq('group_id', GROUP_ID)
+    .order('created_at', { ascending: true });
+
+  if (error) { console.error('Load POIs error:', error.message); return; }
+
+  customSites = (data || []).map(d => ({
+    id:          d.id,
+    title:       d.name,
+    description: d.notes,
+    lat:         d.lat,
+    lon:         d.lng,
+    addedBy:     d.display_name,
+    createdAt:   d.created_at
+  }));
+
+  renderCustomMarkers();
+  renderAllCards();
+  updateStatus();
+}
+
+// ── REALTIME: new POIs from other users appear live ───────────
+function subscribeToSharedPOIs() {
+  sb.channel('shared-pois')
+    .on('postgres_changes', {
+      event:  'INSERT',
+      schema: 'public',
+      table:  'pois',
+      filter: `group_id=eq.${GROUP_ID}`
+    }, payload => {
+      const d = payload.new;
+      if (customSites.find(s => s.id === d.id)) return;
+      customSites.push({
+        id:          d.id,
+        title:       d.name,
+        description: d.notes,
+        lat:         d.lat,
+        lon:         d.lng,
+        addedBy:     d.display_name,
+        createdAt:   d.created_at
+      });
+      renderCustomMarkers();
+      renderAllCards();
+      updateStatus();
+    })
+    .on('postgres_changes', {
+      event:  'DELETE',
+      schema: 'public',
+      table:  'pois',
+      filter: `group_id=eq.${GROUP_ID}`
+    }, payload => {
+      customSites = customSites.filter(s => s.id !== payload.old.id);
+      renderCustomMarkers();
+      renderAllCards();
+      updateStatus();
+    })
+    .subscribe();
 }
 
 function updateStatus() {
@@ -1458,9 +1819,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-loadCustomSites();
-renderCustomMarkers();
-renderAllCards();
+// POIs load via handleSession after auth — no localStorage init needed
 
 if (isMobile()) {
   snapSheet('down');
