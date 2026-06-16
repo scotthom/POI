@@ -1027,7 +1027,13 @@ async function autoLocateIfPermitted() {
   try {
     const result = await navigator.permissions.query({ name: 'geolocation' });
     if (result.state === 'granted') {
-      locateUser();
+      // Wait for map to initialize before firing locate
+      const waitForMap = setInterval(() => {
+        if (map) {
+          clearInterval(waitForMap);
+          locateMe();
+        }
+      }, 100);
     }
     // 'prompt' or 'denied' — do nothing, let user tap the locate button
   } catch (e) {
