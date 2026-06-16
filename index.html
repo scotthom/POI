@@ -1678,8 +1678,12 @@ async function loadSharedPOIs() {
 }
 
 // ── REALTIME: new POIs from other users appear live ───────────
+let sharedPoisChannel = null;
+
 function subscribeToSharedPOIs() {
-  sb.channel('shared-pois')
+  if (sharedPoisChannel) return; // already subscribed
+
+  sharedPoisChannel = sb.channel('shared-pois')
     .on('postgres_changes', {
       event:  'INSERT',
       schema: 'public',
