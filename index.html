@@ -1018,9 +1018,22 @@ async function handleSession(session) {
   // Load shared POIs from Supabase
   loadSharedPOIs();
   subscribeToSharedPOIs();
+
+  // Auto-locate if permission already granted — no prompt, no user action needed
+  autoLocateIfPermitted();
 }
 
-// onAuthStateChange fires immediately on page load with the current session,
+async function autoLocateIfPermitted() {
+  try {
+    const result = await navigator.permissions.query({ name: 'geolocation' });
+    if (result.state === 'granted') {
+      locateUser();
+    }
+    // 'prompt' or 'denied' — do nothing, let user tap the locate button
+  } catch (e) {
+    // Permissions API unsupported on this browser — fail silently
+  }
+}
 // including after the OAuth redirect. Single source of truth — avoids the
 // JWT-not-attached race condition that causes 403 on the profiles read.
 sb.auth.onAuthStateChange((_event, session) => {
