@@ -1246,7 +1246,31 @@ async function locateMe() {
   navigator.geolocation.getCurrentPosition(
     pos => onLocation(pos.coords.latitude, pos.coords.longitude),
     err => {
-      setStatus(`Location denied. Enable location for this site and try again.`);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+
+      let msg = '';
+      switch (err.code) {
+        case err.PERMISSION_DENIED:
+          if (isIOS) {
+            msg = 'Location blocked. To fix: Settings → Privacy & Security → Location Services → Safari → While Using.';
+          } else if (isAndroid) {
+            msg = 'Location blocked. To fix: tap the lock icon in your browser address bar → Permissions → Location → Allow.';
+          } else {
+            msg = 'Location blocked. To fix: click the lock icon in the address bar → Site settings → Location → Allow, then reload.';
+          }
+          break;
+        case err.POSITION_UNAVAILABLE:
+          msg = 'Your location could not be determined. Check that GPS or Wi-Fi is enabled and try again.';
+          break;
+        case err.TIMEOUT:
+          msg = 'Location request timed out. Check your GPS or Wi-Fi signal and try again.';
+          break;
+        default:
+          msg = 'Location unavailable. Please try again.';
+      }
+
+      setStatus(msg);
       setLocateState('denied');
     },
     { enableHighAccuracy: true, timeout: 15000 }
