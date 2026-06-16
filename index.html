@@ -1020,12 +1020,9 @@ async function handleSession(session) {
   subscribeToSharedPOIs();
 }
 
-// On every page load — catches OAuth redirect callback
-sb.auth.getSession().then(({ data: { session } }) => {
-  handleSession(session);
-});
-
-// Catches sign-in / sign-out events
+// onAuthStateChange fires immediately on page load with the current session,
+// including after the OAuth redirect. Single source of truth — avoids the
+// JWT-not-attached race condition that causes 403 on the profiles read.
 sb.auth.onAuthStateChange((_event, session) => {
   handleSession(session);
 });
