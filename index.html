@@ -781,7 +781,7 @@
   </svg>
   <div>
     <div class="header-title">Historical Explorer</div>
-    <div class="header-subtitle">Nearby places with stories</div>
+    <div class="header-subtitle">Nearby places with stories <span id="app-version" style="opacity:0.45;font-size:11px;"></span></div>
   </div>
   <div id="auth-badge">
     <span id="userDisplayName"></span>
@@ -941,6 +941,21 @@
 </div>
 
 <script>
+// ── SERVICE WORKER VERSION DISPLAY ───────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.version) {
+      document.getElementById('app-version').textContent = `(${e.data.version})`;
+    }
+  });
+  // Request version once SW is ready
+  navigator.serviceWorker.ready.then(reg => {
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage('getVersion');
+    }
+  });
+}
+
 // ── SUPABASE INIT ────────────────────────────────────────────
 const SUPABASE_URL  = 'https://ecouhqvbqqarnjxebhyj.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjb3VocXZicXFhcm5qeGViaHlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNzY5MzgsImV4cCI6MjA5Njk1MjkzOH0.VtT95oAB4RcqZs4PwhL2Ar5-MltriXhnVLHMMvBKWm0';

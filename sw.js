@@ -1,4 +1,4 @@
-const VERSION = 'v8'; // bump on every deploy
+const VERSION = 'v9'; // bump on every deploy
 const CACHE = `poi-explorer-${VERSION}`;
 
 self.addEventListener('install', e => {
@@ -15,6 +15,12 @@ self.addEventListener('activate', e => {
     )
   );
   self.clients.claim();
+});
+
+self.addEventListener('message', e => {
+  if (e.data === 'getVersion') {
+    e.source.postMessage({ version: VERSION });
+  }
 });
 
 self.addEventListener('fetch', e => {
