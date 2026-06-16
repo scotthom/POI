@@ -18,6 +18,19 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+
+  // Bypass cache for Supabase API and OAuth callback URLs
+  if (
+    url.hostname.includes('supabase.co') ||
+    url.searchParams.has('code') ||
+    url.hash.includes('access_token') ||
+    url.pathname.includes('auth/v1')
+  ) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
