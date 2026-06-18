@@ -1105,6 +1105,18 @@ let lastY = 0, lastTime = 0, velocityY = 0;
 let currentTranslate = 0;
 const TAP_THRESHOLD = 5; // px — below this delta = tap, not drag
 
+// Peek height varies by active sheet mode:
+//   list   — 160px: handle + status + first card visible (implies more content)
+//   detail — 140px: handle + back button + POI title (one line, truncated)
+//   add    — 120px: handle + "Add a place" header (form auto-opens to full anyway)
+let peekH = 160;
+
+function setSheetMode(mode) {
+  if (mode === 'list')   peekH = 160;
+  if (mode === 'detail') peekH = 140;
+  if (mode === 'add')    peekH = 120;
+}
+
 function setTranslate(y) {
   currentTranslate = y;
   sheet.style.transform = `translateY(${y}px)`;
@@ -1115,7 +1127,6 @@ function snapSheet(direction) {
   if (direction === 'open') sheet.classList.add('sheet-open');
   else if (direction === 'mid') sheet.classList.add('sheet-mid');
   const sheetH = sheet.offsetHeight;
-  const peekH = 120;
   const midH = window.innerHeight * 0.52;
   if (direction === 'open')     currentTranslate = 0;
   else if (direction === 'mid') currentTranslate = sheetH - midH;
@@ -1177,9 +1188,17 @@ dragZone.addEventListener('touchmove', e => {
   lastY = y;
   lastTime = now;
   const dy = y - dragStartY;
-  const newT = Math.max(0, dragStartTranslate + dy);
-  setTranslate(newT);
   const sheetH = sheet.offsetHeight;
+  const floorT = sheetH - peekH; // translate value at peek (the drag floor)
+  const rawT = dragStartTranslate + dy;
+  let newT;
+  if (rawT > floorT) {
+    // Below peek — rubber-band: sheet follows finger at 30% speed
+    newT = floorT + (rawT - floorT) * 0.3;
+  } else {
+    newT = Math.max(0, rawT); // hard ceiling at fully open
+  }
+  setTranslate(newT);
   updateFabGroup(sheetH - newT + 14);
 }, { passive: true });
 
@@ -1200,7 +1219,6 @@ dragZone.addEventListener('touchend', e => {
   isDragging = false;
   const finalT = currentTranslate;
   const sheetH = sheet.offsetHeight;
-  const peekH = 120;
   const midH = window.innerHeight * 0.52;
   const snapOpen = 0;
   const snapMid  = sheetH - midH;
@@ -1546,7 +1564,7 @@ function selectSite(i) {
     document.getElementById(`${ctx}AddForm`).classList.remove('visible');
   });
 
-  if (isMobile()) snapSheet('open');
+  if (isMobile()) { setSheetMode('detail'); snapSheet('open'); }
 }
 
 // ── BACK TO LIST ─────────────────────────────────────────────
@@ -1559,7 +1577,7 @@ function showList(ctx) {
     document.getElementById(`${c}Detail`).classList.remove('visible');
     document.getElementById(`${c}AddForm`).classList.remove('visible');
   });
-  if (isMobile()) snapSheet('mid');
+  if (isMobile()) { setSheetMode('list'); snapSheet('mid'); }
 }
 
 // ── SELECT CUSTOM SITE ────────────────────────────────────────
@@ -1582,7 +1600,7 @@ function selectCustomSite(id) {
     document.getElementById(`${ctx}AddForm`).classList.remove('visible');
   });
 
-  if (isMobile()) snapSheet('open');
+  if (isMobile()) { setSheetMode('detail'); snapSheet('open'); }
 }
 
 // ── SHOW ADD FORM ─────────────────────────────────────────────
@@ -1605,7 +1623,7 @@ function showAddForm() {
     document.getElementById(`${ctx}AddForm`).classList.add('visible');
   });
 
-  if (isMobile()) snapSheet('open');
+  if (isMobile()) { setSheetMode('add'); snapSheet('open'); }
 
   // Focus name field after sheet animates
   setTimeout(() => {
